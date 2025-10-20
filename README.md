@@ -1,4 +1,4 @@
-# GitHub Sidekick - Setup Guide
+# CodeCompanion - Setup Guide
 
 A beautiful iOS 26-inspired GitHub companion app built with Flutter. Track your contributions, monitor streaks, and visualize your coding activity with a stunning liquid glass aesthetic.
 
@@ -14,8 +14,8 @@ Before you begin, ensure you have the following installed:
 ## Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/github_sidekick.git
-cd github_sidekick
+git clone https://github.com/un1xr00t/CodeCompanion
+cd CodeCompanion
 ```
 
 ## Step 2: Install Dependencies
@@ -33,7 +33,7 @@ You need to create a GitHub OAuth App to enable authentication:
 1. Go to [GitHub Settings > Developer Settings > OAuth Apps](https://github.com/settings/developers)
 2. Click "New OAuth App"
 3. Fill in the details:
-   - **Application name**: GitHub Sidekick (or whatever you want)
+   - **Application name**: CodeCompanion (or whatever you want)
    - **Homepage URL**: `https://yourdomain.com` (or use `http://localhost` for testing)
    - **Authorization callback URL**: `codecompanion://callback`
 4. Click "Register application"
@@ -71,7 +71,7 @@ GITHUB_REDIRECT_URI=codecompanion://callback
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
         <key>CFBundleURLName</key>
-        <string>com.yourcompany.githubsidekick</string>
+        <string>com.yourcompany.codecompanion</string>
         <key>CFBundleURLSchemes</key>
         <array>
             <string>codecompanion</string>
@@ -83,7 +83,7 @@ GITHUB_REDIRECT_URI=codecompanion://callback
 2. Update the bundle identifier in Xcode:
    - Open `ios/Runner.xcworkspace` in Xcode
    - Select the Runner target
-   - Change the Bundle Identifier to something unique (e.g., `com.yourcompany.githubsidekick`)
+   - Change the Bundle Identifier to something unique (e.g., `com.yourcompany.codecompanion`)
 
 ### Android Setup
 
@@ -104,7 +104,7 @@ GITHUB_REDIRECT_URI=codecompanion://callback
 
 ```gradle
 defaultConfig {
-    applicationId "com.yourcompany.githubsidekick"
+    applicationId "com.yourcompany.codecompanion"
     // ... rest of config
 }
 ```
