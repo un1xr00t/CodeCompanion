@@ -29,7 +29,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
-        title: 'GitHub Sidekick',
+        title: 'CodeCompanion',
         useNativeToolbar: true,
       ),
       bottomNavigationBar: AdaptiveBottomNavigationBar(
@@ -67,7 +67,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           });
         },
       ),
-      body: _buildPageForIndex(_selectedIndex),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 120, bottom: 100),
+        child: _buildPageForIndex(_selectedIndex),
+      ),
     );
   }
 
