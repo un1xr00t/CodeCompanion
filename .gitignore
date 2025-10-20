@@ -1,0 +1,91 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Environment variables - SENSITIVE!
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+lib/build/
+**/build/
+
+# Output files
+lib/output.txt
+*.txt
+
+# iOS build artifacts
+ios/Pods/
+ios/Podfile.lock
+ios/.symlinks/
+ios/Flutter/
+ios/Runner.xcodeproj/
+ios/Runner.xcworkspace/
+ios/Runner/
+ios/.gitignore
+ios/ServiceDefinitions.json
+
+# Android - exclude everything
+android/
+
+# macOS build artifacts
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/ephemeral/
+
+# Windows build artifacts  
+windows/flutter/ephemeral/
+
+# Linux build artifacts
+linux/flutter/ephemeral/
+
+# Web build artifacts
+web/
+
+# Cache and temp files
+*.lock
+*.tmp
+*.temp
