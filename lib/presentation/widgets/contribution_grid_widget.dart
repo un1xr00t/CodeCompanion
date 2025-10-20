@@ -56,128 +56,102 @@ class ContributionGridWidget extends StatelessWidget {
     
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
+    // For compact mode on home screen, show last 26 weeks (6 months)
+    final displayWeeks = compact ? weeks.sublist(weeks.length > 26 ? weeks.length - 26 : 0) : weeks;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Month labels
-        SizedBox(
-          height: 20,
-          child: Row(
-            children: [
-              const SizedBox(width: 30), // Space for day labels
-              Expanded(
-                child: _buildMonthLabels(dates, weeks.length),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Grid with day labels
+        // Grid with day labels and month labels
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Day labels (Mon, Wed, Fri)
+            // Day labels column with space for month labels
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _buildDayLabel('Mon', 0, context),
-                _buildDayLabel('', 1, context),
-                _buildDayLabel('Wed', 2, context),
-                _buildDayLabel('', 3, context),
-                _buildDayLabel('Fri', 4, context),
-                _buildDayLabel('', 5, context),
-                _buildDayLabel('', 6, context),
+                // Month label spacer
+                if (!compact) SizedBox(height: 24, width: 32),
+                if (!compact) const SizedBox(height: 8),
+                // Day labels
+                _buildDayLabel('Mon', 0, context, compact),
+                _buildDayLabel('', 1, context, compact),
+                _buildDayLabel('Wed', 2, context, compact),
+                _buildDayLabel('', 3, context, compact),
+                _buildDayLabel('Fri', 4, context, compact),
+                _buildDayLabel('', 5, context, compact),
+                _buildDayLabel('', 6, context, compact),
               ],
             ),
             const SizedBox(width: 8),
-            // Contribution grid
+            // Scrollable grid with month labels
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                physics: compact ? const NeverScrollableScrollPhysics() : const BouncingScrollPhysics(),
-                child: Row(
-                  children: compact 
-                      ? weeks.take(20).map((week) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 3),
-                            child: Column(
-                              children: week.map((date) {
-                                if (date.year == 1970) {
-                                  // Empty cell
-                                  return Container(
-                                    width: 11,
-                                    height: 11,
-                                    margin: const EdgeInsets.only(bottom: 2.5),
-                                  );
-                                }
-                                
-                                final dateKey = DateFormat('yyyy-MM-dd').format(date);
-                                final count = contributions[dateKey] ?? 0;
-                                
+                physics: compact 
+                    ? const NeverScrollableScrollPhysics() 
+                    : const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Month labels
+                    if (!compact && displayWeeks.isNotEmpty) 
+                      SizedBox(
+                        height: 24,
+                        child: _buildScrollableMonthLabels(displayWeeks, compact),
+                      ),
+                    if (!compact) const SizedBox(height: 8),
+                    // Contribution grid
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: displayWeeks.map((week) {
+                        return Padding(
+                          padding: EdgeInsets.only(right: compact ? 3 : 4),
+                          child: Column(
+                            children: week.map((date) {
+                              if (date.year == 1970) {
+                                // Empty cell
                                 return Container(
-                                  width: 11,
-                                  height: 11,
-                                  margin: const EdgeInsets.only(bottom: 2.5),
+                                  width: compact ? 12 : 14,
+                                  height: compact ? 12 : 14,
+                                  margin: EdgeInsets.only(bottom: compact ? 3 : 4),
+                                );
+                              }
+                              
+                              final dateKey = DateFormat('yyyy-MM-dd').format(date);
+                              final count = contributions[dateKey] ?? 0;
+                              final borderColor = isDark 
+                                  ? Colors.white.withOpacity(0.08)
+                                  : Colors.black.withOpacity(0.08);
+                              
+                              return Tooltip(
+                                message: '$count contributions on ${DateFormat('MMM d, yyyy').format(date)}',
+                                child: Container(
+                                  width: compact ? 12 : 14,
+                                  height: compact ? 12 : 14,
+                                  margin: EdgeInsets.only(bottom: compact ? 3 : 4),
                                   decoration: BoxDecoration(
                                     color: _getColorForCount(count, isDark),
-                                    borderRadius: BorderRadius.circular(2),
+                                    borderRadius: BorderRadius.circular(3),
                                     border: Border.all(
-                                      color: isDark 
-                                          ? Colors.white.withOpacity(0.05)
-                                          : Colors.black.withOpacity(0.05),
+                                      color: borderColor,
                                       width: 0.5,
                                     ),
                                   ),
-                                );
-                              }).toList(),
-                            ),
-                          );
-                        }).toList()
-                      : weeks.map((week) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 3),
-                            child: Column(
-                              children: week.map((date) {
-                                if (date.year == 1970) {
-                                  // Empty cell
-                                  return Container(
-                                    width: 12,
-                                    height: 12,
-                                    margin: const EdgeInsets.only(bottom: 3),
-                                  );
-                                }
-                                
-                                final dateKey = DateFormat('yyyy-MM-dd').format(date);
-                                final count = contributions[dateKey] ?? 0;
-                                
-                                return Tooltip(
-                                  message: '$count contributions on ${DateFormat('MMM d, yyyy').format(date)}',
-                                  child: Container(
-                                    width: 12,
-                                    height: 12,
-                                    margin: const EdgeInsets.only(bottom: 3),
-                                    decoration: BoxDecoration(
-                                      color: _getColorForCount(count, isDark),
-                                      borderRadius: BorderRadius.circular(2),
-                                      border: Border.all(
-                                        color: isDark 
-                                            ? Colors.white.withOpacity(0.05)
-                                            : Colors.black.withOpacity(0.05),
-                                        width: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          );
-                        }).toList(),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: compact ? 12 : 16),
         // Legend
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -185,24 +159,26 @@ class ContributionGridWidget extends StatelessWidget {
             Text(
               'Less',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: compact ? 10 : 11,
                 color: AppColors.textTertiaryLight,
               ),
             ),
             const SizedBox(width: 6),
             ...List.generate(5, (index) {
+              final borderColor = isDark 
+                  ? Colors.white.withOpacity(0.08)
+                  : Colors.black.withOpacity(0.08);
+              
               return Padding(
                 padding: const EdgeInsets.only(left: 3),
                 child: Container(
-                  width: 12,
-                  height: 12,
+                  width: compact ? 11 : 12,
+                  height: compact ? 11 : 12,
                   decoration: BoxDecoration(
                     color: _getColorForLevel(index, isDark),
                     borderRadius: BorderRadius.circular(2),
                     border: Border.all(
-                      color: isDark 
-                          ? Colors.white.withOpacity(0.05)
-                          : Colors.black.withOpacity(0.05),
+                      color: borderColor,
                       width: 0.5,
                     ),
                   ),
@@ -213,7 +189,7 @@ class ContributionGridWidget extends StatelessWidget {
             Text(
               'More',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: compact ? 10 : 11,
                 color: AppColors.textTertiaryLight,
               ),
             ),
@@ -223,50 +199,81 @@ class ContributionGridWidget extends StatelessWidget {
     );
   }
   
-  Widget _buildDayLabel(String label, int index, BuildContext context) {
+  Widget _buildDayLabel(String label, int index, BuildContext context, bool compact) {
     return SizedBox(
-      height: 11,
-      width: 25,
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 9,
-          color: AppColors.textTertiaryLight,
+      height: compact ? 12 : 14,
+      width: compact ? 28 : 32,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: compact ? 9 : 10,
+            color: AppColors.textTertiaryLight,
+          ),
+          textAlign: TextAlign.right,
         ),
-        textAlign: TextAlign.right,
       ),
     );
   }
   
-  Widget _buildMonthLabels(List<DateTime> dates, int weekCount) {
-    final months = <String, double>{};
+  Widget _buildScrollableMonthLabels(List<List<DateTime>> weeks, bool compact) {
+    if (weeks.isEmpty) return const SizedBox.shrink();
+    
+    final cellWidth = compact ? 12.0 : 14.0;
+    final spacing = compact ? 3.0 : 4.0;
+    final totalWidth = cellWidth + spacing;
+    
+    final monthLabels = <Widget>[];
     var currentMonth = '';
     
-    for (int i = 0; i < dates.length; i++) {
-      final date = dates[i];
-      final monthName = DateFormat('MMM').format(date);
+    for (int weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
+      final week = weeks[weekIndex];
+      if (week.isEmpty) continue;
       
-      if (monthName != currentMonth) {
-        final weekIndex = i / 7;
-        months[monthName] = weekIndex;
-        currentMonth = monthName;
+      // Find first valid date in week (should be Monday, index 0)
+      DateTime? firstDate;
+      for (var date in week) {
+        if (date.year != 1970) {
+          firstDate = date;
+          break;
+        }
+      }
+      
+      if (firstDate != null) {
+        final monthName = DateFormat('MMM').format(firstDate);
+        if (monthName != currentMonth && monthName.isNotEmpty) {
+          currentMonth = monthName;
+          final position = weekIndex * totalWidth;
+          
+          monthLabels.add(
+            Positioned(
+              left: position,
+              top: 0,
+              child: Text(
+                monthName,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textTertiaryLight,
+                ),
+              ),
+            ),
+          );
+        }
       }
     }
     
-    return Stack(
-      children: months.entries.map((entry) {
-        final position = (entry.value * 15); // 12px cell + 3px margin
-        return Positioned(
-          left: position,
-          child: Text(
-            entry.key,
-            style: TextStyle(
-              fontSize: 11,
-              color: AppColors.textTertiaryLight,
-            ),
-          ),
-        );
-      }).toList(),
+    // Calculate total width for the stack
+    final stackWidth = weeks.length * totalWidth;
+    
+    return SizedBox(
+      width: stackWidth,
+      height: 24,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: monthLabels,
+      ),
     );
   }
   
