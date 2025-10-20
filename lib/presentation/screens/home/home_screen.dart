@@ -1,9 +1,9 @@
 // lib/presentation/screens/home/home_screen.dart
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/github_stats_provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -27,121 +27,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      appBar: AdaptiveAppBar(
+        title: 'GitHub Sidekick',
+        useNativeToolbar: true,
+      ),
+      bottomNavigationBar: AdaptiveBottomNavigationBar(
+        useNativeBottomBar: true, // This enables iOS 26 Liquid Glass automatically
+        items: [
+          AdaptiveNavigationDestination(
+            icon: PlatformInfo.isIOS26OrHigher()
+                ? "house.fill"
+                : CupertinoIcons.home,
+            label: 'Home',
+          ),
+          AdaptiveNavigationDestination(
+            icon: PlatformInfo.isIOS26OrHigher()
+                ? "chart.bar.fill"
+                : CupertinoIcons.chart_bar_fill,
+            label: 'Stats',
+          ),
+          AdaptiveNavigationDestination(
+            icon: PlatformInfo.isIOS26OrHigher()
+                ? "person.fill"
+                : CupertinoIcons.person_fill,
+            label: 'Profile',
+          ),
+          AdaptiveNavigationDestination(
+            icon: PlatformInfo.isIOS26OrHigher()
+                ? "gearshape.fill"
+                : CupertinoIcons.settings_solid,
+            label: 'Settings',
+          ),
+        ],
+        selectedIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+      ),
       body: _buildPageForIndex(_selectedIndex),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.white.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildNavItem(
-                        icon: CupertinoIcons.home,
-                        label: 'Home',
-                        index: 0,
-                      ),
-                      _buildNavItem(
-                        icon: CupertinoIcons.chart_bar_fill,
-                        label: 'Stats',
-                        index: 1,
-                      ),
-                      _buildNavItem(
-                        icon: CupertinoIcons.person_fill,
-                        label: 'Profile',
-                        index: 2,
-                      ),
-                      _buildNavItem(
-                        icon: CupertinoIcons.settings,
-                        label: 'Settings',
-                        index: 3,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    required int index,
-  }) {
-    final isSelected = _selectedIndex == index;
-    
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected
-                      ? AppColors.accentBlue
-                      : Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withValues(alpha: 0.5)
-                          : Colors.black.withValues(alpha: 0.5),
-                  size: 24,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected
-                        ? AppColors.accentBlue
-                        : Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.black.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -181,23 +107,6 @@ class _HomeTab extends ConsumerWidget {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // App Bar
-        SliverAppBar(
-          floating: true,
-          snap: true,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: const Text('GitHub Sidekick'),
-          centerTitle: true,
-          actions: [
-            if (statsState.isLoading)
-              const Padding(
-                padding: EdgeInsets.only(right: 16),
-                child: CupertinoActivityIndicator(),
-              ),
-          ],
-        ),
-        
         // Header with user info
         SliverToBoxAdapter(
           child: Padding(
@@ -270,7 +179,7 @@ class _HomeTab extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 
-                // Stats Grid - Fixed overflow
+                // Stats Grid
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
