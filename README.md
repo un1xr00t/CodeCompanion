@@ -2,6 +2,15 @@
 
 A beautiful iOS 26-inspired GitHub companion app built with Flutter. Track your contributions, monitor streaks, and visualize your coding activity with a stunning liquid glass aesthetic.
 
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/59f5ee76-a9d1-47e5-8f5c-a2616c1be09b" width="30%" />
+  <img src="https://github.com/user-attachments/assets/9195b11f-235f-4510-85ad-d7ac838cd581" width="30%" />
+  <img src="https://github.com/user-attachments/assets/1133b6ff-7821-457a-9bbc-c2c1a3172b62" width="30%" />
+</p>
+
+
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
