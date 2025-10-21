@@ -1,9 +1,11 @@
 // lib/presentation/widgets/contribution_grid_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
+import '../../presentation/screens/settings/settings_screen.dart';
 
-class ContributionGridWidget extends StatelessWidget {
+class ContributionGridWidget extends ConsumerWidget {
   final Map<String, int> contributions;
   final bool compact;
   
@@ -14,7 +16,8 @@ class ContributionGridWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = ref.watch(contributionColorSchemeProvider);
     final now = DateTime.now();
     // Go back exactly 52 weeks (364 days) to show a full year
     final weeksAgo = now.subtract(const Duration(days: 364));
@@ -62,55 +65,44 @@ class ContributionGridWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Grid with day labels and month labels
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Day labels column with space for month labels
+            // Day labels on the left
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Month label spacer
-                if (!compact) SizedBox(height: 24, width: 32),
-                if (!compact) const SizedBox(height: 8),
-                // Day labels
+                SizedBox(height: compact ? 22 : 28),
                 _buildDayLabel('Mon', 0, context, compact),
                 _buildDayLabel('', 1, context, compact),
                 _buildDayLabel('Wed', 2, context, compact),
                 _buildDayLabel('', 3, context, compact),
                 _buildDayLabel('Fri', 4, context, compact),
                 _buildDayLabel('', 5, context, compact),
-                _buildDayLabel('', 6, context, compact),
+                _buildDayLabel('Sun', 6, context, compact),
               ],
             ),
             const SizedBox(width: 8),
-            // Scrollable grid with month labels
+            // Contribution grid
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                physics: compact 
-                    ? const NeverScrollableScrollPhysics() 
-                    : const BouncingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Month labels
-                    if (!compact && displayWeeks.isNotEmpty) 
-                      SizedBox(
-                        height: 24,
-                        child: _buildScrollableMonthLabels(displayWeeks, compact),
-                      ),
-                    if (!compact) const SizedBox(height: 8),
-                    // Contribution grid
+                    // Month labels at top
+                    _buildScrollableMonthLabels(displayWeeks, compact),
+                    const SizedBox(height: 4),
+                    // Grid of contributions
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: displayWeeks.map((week) {
-                        return Padding(
-                          padding: EdgeInsets.only(right: compact ? 3 : 4),
+                        return Container(
+                          margin: EdgeInsets.only(right: compact ? 3 : 4),
                           child: Column(
                             children: week.map((date) {
+                              // Empty cell for placeholder dates
                               if (date.year == 1970) {
-                                // Empty cell
                                 return Container(
                                   width: compact ? 12 : 14,
                                   height: compact ? 12 : 14,
@@ -131,7 +123,7 @@ class ContributionGridWidget extends StatelessWidget {
                                   height: compact ? 12 : 14,
                                   margin: EdgeInsets.only(bottom: compact ? 3 : 4),
                                   decoration: BoxDecoration(
-                                    color: _getColorForCount(count, isDark),
+                                    color: _getColorForCount(count, isDark, colorScheme),
                                     borderRadius: BorderRadius.circular(3),
                                     border: Border.all(
                                       color: borderColor,
@@ -175,7 +167,7 @@ class ContributionGridWidget extends StatelessWidget {
                   width: compact ? 11 : 12,
                   height: compact ? 11 : 12,
                   decoration: BoxDecoration(
-                    color: _getColorForLevel(index, isDark),
+                    color: _getColorForLevel(index, isDark, colorScheme),
                     borderRadius: BorderRadius.circular(2),
                     border: Border.all(
                       color: borderColor,
@@ -277,34 +269,87 @@ class ContributionGridWidget extends StatelessWidget {
     );
   }
   
-  Color _getColorForCount(int count, bool isDark) {
+  Color _getColorForCount(int count, bool isDark, String colorScheme) {
     if (count == 0) {
-      return isDark ? AppColors.contributionLevel0Dark : AppColors.contributionLevel0;
+      return isDark ? const Color(0xFF161B22) : const Color(0xFFEBEDF0);
     } else if (count <= 3) {
-      return isDark ? AppColors.contributionLevel1Dark : AppColors.contributionLevel1;
+      return _getLevel1Color(isDark, colorScheme);
     } else if (count <= 6) {
-      return isDark ? AppColors.contributionLevel2Dark : AppColors.contributionLevel2;
+      return _getLevel2Color(isDark, colorScheme);
     } else if (count <= 9) {
-      return isDark ? AppColors.contributionLevel3Dark : AppColors.contributionLevel3;
+      return _getLevel3Color(isDark, colorScheme);
     } else {
-      return isDark ? AppColors.contributionLevel4Dark : AppColors.contributionLevel4;
+      return _getLevel4Color(isDark, colorScheme);
     }
   }
   
-  Color _getColorForLevel(int level, bool isDark) {
+  Color _getColorForLevel(int level, bool isDark, String colorScheme) {
     switch (level) {
       case 0:
-        return isDark ? AppColors.contributionLevel0Dark : AppColors.contributionLevel0;
+        return isDark ? const Color(0xFF161B22) : const Color(0xFFEBEDF0);
       case 1:
-        return isDark ? AppColors.contributionLevel1Dark : AppColors.contributionLevel1;
+        return _getLevel1Color(isDark, colorScheme);
       case 2:
-        return isDark ? AppColors.contributionLevel2Dark : AppColors.contributionLevel2;
+        return _getLevel2Color(isDark, colorScheme);
       case 3:
-        return isDark ? AppColors.contributionLevel3Dark : AppColors.contributionLevel3;
+        return _getLevel3Color(isDark, colorScheme);
       case 4:
-        return isDark ? AppColors.contributionLevel4Dark : AppColors.contributionLevel4;
+        return _getLevel4Color(isDark, colorScheme);
       default:
-        return isDark ? AppColors.contributionLevel0Dark : AppColors.contributionLevel0;
+        return isDark ? const Color(0xFF161B22) : const Color(0xFFEBEDF0);
+    }
+  }
+
+  // GitHub Green scheme
+  Color _getLevel1Color(bool isDark, String colorScheme) {
+    switch (colorScheme) {
+      case 'github':
+        return isDark ? const Color(0xFF0E4429) : const Color(0xFF9BE9A8);
+      case 'ocean':
+        return isDark ? const Color(0xFF0A2F51) : const Color(0xFF87CEEB);
+      case 'sunset':
+        return isDark ? const Color(0xFF4A2C2A) : const Color(0xFFFFB347);
+      default:
+        return isDark ? const Color(0xFF0E4429) : const Color(0xFF9BE9A8);
+    }
+  }
+
+  Color _getLevel2Color(bool isDark, String colorScheme) {
+    switch (colorScheme) {
+      case 'github':
+        return isDark ? const Color(0xFF006D32) : const Color(0xFF40C463);
+      case 'ocean':
+        return isDark ? const Color(0xFF0E4C92) : const Color(0xFF4682B4);
+      case 'sunset':
+        return isDark ? const Color(0xFF7C3A2D) : const Color(0xFFFF8C42);
+      default:
+        return isDark ? const Color(0xFF006D32) : const Color(0xFF40C463);
+    }
+  }
+
+  Color _getLevel3Color(bool isDark, String colorScheme) {
+    switch (colorScheme) {
+      case 'github':
+        return isDark ? const Color(0xFF26A641) : const Color(0xFF30A14E);
+      case 'ocean':
+        return isDark ? const Color(0xFF1E6BB8) : const Color(0xFF1E90FF);
+      case 'sunset':
+        return isDark ? const Color(0xFFA0522D) : const Color(0xFFFF6347);
+      default:
+        return isDark ? const Color(0xFF26A641) : const Color(0xFF30A14E);
+    }
+  }
+
+  Color _getLevel4Color(bool isDark, String colorScheme) {
+    switch (colorScheme) {
+      case 'github':
+        return isDark ? const Color(0xFF39D353) : const Color(0xFF216E39);
+      case 'ocean':
+        return isDark ? const Color(0xFF3A9BDC) : const Color(0xFF0047AB);
+      case 'sunset':
+        return isDark ? const Color(0xFFD2691E) : const Color(0xFFFF4500);
+      default:
+        return isDark ? const Color(0xFF39D353) : const Color(0xFF216E39);
     }
   }
 }
