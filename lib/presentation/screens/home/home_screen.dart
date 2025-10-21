@@ -14,6 +14,7 @@ import '../stats/stats_screen.dart';
 import '../profile/profile_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../../core/theme/app_colors.dart';
+import '../achievements/achievements_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -49,6 +50,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           AdaptiveNavigationDestination(
             icon: PlatformInfo.isIOS26OrHigher()
+                ? "star.fill"
+                : CupertinoIcons.star_fill,
+            label: 'Achievements',
+          ),
+          AdaptiveNavigationDestination(
+            icon: PlatformInfo.isIOS26OrHigher()
                 ? "person.fill"
                 : CupertinoIcons.person_fill,
             label: 'Profile',
@@ -75,19 +82,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildPageForIndex(int index) {
-    switch (index) {
-      case 0:
-        return const _HomeTab();
-      case 1:
-        return const StatsScreen();
-      case 2:
-        return const ProfileScreen();
-      case 3:
-        return const SettingsScreen();
-      default:
-        return const _HomeTab();
-    }
+  switch (index) {
+    case 0:
+      return const _HomeTab();
+    case 1:
+      return const StatsScreen();
+    case 2:
+      return const AchievementsScreen(); // Add this import: import '../achievements/achievements_screen.dart';
+    case 3:
+      return const ProfileScreen();
+    case 4:
+      return const SettingsScreen();
+    default:
+      return const _HomeTab();
   }
+}
 }
 
 class _HomeTab extends ConsumerWidget {

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../data/services/github_api_service.dart';
+import '../data/services/achievement_service.dart';
 import 'auth_provider.dart';
 
 class GitHubStats {
@@ -52,8 +53,9 @@ class GitHubStats {
 class GitHubStatsNotifier extends StateNotifier<GitHubStats> {
   final GitHubApiService _apiService;
   final String username;
+  final Ref ref;
 
-  GitHubStatsNotifier(this._apiService, this.username) : super(GitHubStats()) {
+  GitHubStatsNotifier(this._apiService, this.username, this.ref) : super(GitHubStats()) {
     fetchStats();
   }
 
@@ -65,7 +67,7 @@ class GitHubStatsNotifier extends StateNotifier<GitHubStats> {
       final currentUser = await _apiService.getCurrentUser();
       final userEmail = currentUser['email'] as String?;
       
-      debugPrint('🔍 Authenticated user email: $userEmail');
+      debugPrint('📧 Authenticated user email: $userEmail');
 
       // Fetch ALL repos (public + private) with pagination
       final repos = <dynamic>[];
@@ -109,6 +111,9 @@ class GitHubStatsNotifier extends StateNotifier<GitHubStats> {
         repoBreakdown: contributionData['repoBreakdown'],
         isLoading: false,
       );
+
+      // ✅ CHECK ACHIEVEMENTS AFTER STATS UPDATE
+      await _checkAchievementsAfterStatsUpdate();
     } catch (e) {
       debugPrint('Error fetching stats: $e');
       state = state.copyWith(
@@ -116,6 +121,120 @@ class GitHubStatsNotifier extends StateNotifier<GitHubStats> {
         error: e.toString(),
       );
     }
+  }
+
+  // ✅ NEW: Check achievements after stats update
+  Future<void> _checkAchievementsAfterStatsUpdate() async {
+    try {
+      final achievementService = AchievementService();
+      await achievementService.init();
+      
+      // Get user data for follower count
+      final authState = ref.read(authProvider);
+      final user = authState.user;
+      
+      if (user == null) {
+        debugPrint('⚠️ No user data available for achievement check');
+        return;
+      }
+      
+      // Calculate streaks
+      final streaks = _calculateStreaks(state.contributions);
+      
+      debugPrint('🔍 Checking achievements...');
+      debugPrint('   Total Commits: ${state.totalContributions}');
+      debugPrint('   Current Streak: ${streaks['currentStreak']}');
+      debugPrint('   Longest Streak: ${streaks['longestStreak']}');
+      debugPrint('   Total Repos: ${state.totalRepos}');
+      debugPrint('   Followers: ${user.followers}');
+      
+      // Check and unlock achievements
+      final newlyUnlocked = await achievementService.checkAndUnlockAchievements(
+        totalCommits: state.totalContributions,
+        currentStreak: streaks['currentStreak'] as int? ?? 0,
+        longestStreak: streaks['longestStreak'] as int? ?? 0,
+        totalRepos: state.totalRepos,
+        followers: user.followers,
+        contributions: state.contributions,
+        languageBreakdown: {}, // TODO: Add language tracking
+        commitTimestamps: null,
+      );
+      
+      if (newlyUnlocked.isNotEmpty) {
+        debugPrint('🎉 ${newlyUnlocked.length} NEW ACHIEVEMENTS UNLOCKED!');
+        for (final achievement in newlyUnlocked) {
+          debugPrint('   🏆 ${achievement.title} (+${achievement.xpReward} XP)');
+        }
+      } else {
+        debugPrint('✓ No new achievements unlocked');
+      }
+    } catch (e) {
+      debugPrint('❌ Error checking achievements: $e');
+    }
+  }
+
+  // ✅ Calculate streaks helper
+  Map<String, int> _calculateStreaks(Map<String, int> contributions) {
+    int longestStreak = 0;
+    int currentStreak = 0;
+    int tempStreak = 0;
+
+    final sortedDates = contributions.keys.toList()..sort();
+
+    // Calculate longest streak
+    DateTime? lastDate;
+    for (var dateStr in sortedDates) {
+      final date = DateTime.parse(dateStr);
+      final count = contributions[dateStr] ?? 0;
+
+      if (count > 0) {
+        if (lastDate == null) {
+          tempStreak = 1;
+        } else {
+          final daysDiff = date.difference(lastDate).inDays;
+          if (daysDiff == 1) {
+            tempStreak++;
+          } else {
+            if (tempStreak > longestStreak) {
+              longestStreak = tempStreak;
+            }
+            tempStreak = 1;
+          }
+        }
+        lastDate = date;
+      }
+    }
+
+    if (tempStreak > longestStreak) {
+      longestStreak = tempStreak;
+    }
+
+    // Calculate current streak
+    final today = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(today);
+    final yesterdayStr = DateFormat('yyyy-MM-dd').format(today.subtract(const Duration(days: 1)));
+
+    if (contributions.containsKey(todayStr) || contributions.containsKey(yesterdayStr)) {
+      var checkDate = contributions.containsKey(todayStr) 
+          ? today 
+          : today.subtract(const Duration(days: 1));
+      currentStreak = 0;
+
+      while (true) {
+        final checkDateStr = DateFormat('yyyy-MM-dd').format(checkDate);
+        if (contributions.containsKey(checkDateStr) && (contributions[checkDateStr] ?? 0) > 0) {
+          currentStreak++;
+          checkDate = checkDate.subtract(const Duration(days: 1));
+        } else {
+          break;
+        }
+      }
+    }
+
+    return {
+      'currentStreak': currentStreak,
+      'longestStreak': longestStreak,
+    };
   }
 
   Future<Map<String, dynamic>> _fetchContributionsFromRepos(List<dynamic> repos, String? userEmail) async {
@@ -278,7 +397,7 @@ class GitHubStatsNotifier extends StateNotifier<GitHubStats> {
       debugPrint('✅ Total contributions found: $total');
       debugPrint('📊 Contribution days: ${contributions.length}');
       debugPrint('📅 Date range covered: ${contributions.keys.isNotEmpty ? contributions.keys.reduce((a, b) => a.compareTo(b) < 0 ? a : b) : "none"} to ${contributions.keys.isNotEmpty ? contributions.keys.reduce((a, b) => a.compareTo(b) > 0 ? a : b) : "none"}');
-      debugPrint('🗂️  Repo breakdown: ${repoBreakdown.length} repos');
+      debugPrint('🗂️ Repo breakdown: ${repoBreakdown.length} repos');
       repoBreakdown.forEach((repo, count) {
         debugPrint('   📁 $repo: $count commits');
       });
@@ -303,10 +422,10 @@ class GitHubStatsNotifier extends StateNotifier<GitHubStats> {
   }
 }
 
-// Provider
+// Provider - UPDATED to pass ref
 final githubStatsProvider = StateNotifierProvider.family<GitHubStatsNotifier, GitHubStats, String>(
   (ref, username) {
     final apiService = GitHubApiService();
-    return GitHubStatsNotifier(apiService, username);
+    return GitHubStatsNotifier(apiService, username, ref);
   },
 );

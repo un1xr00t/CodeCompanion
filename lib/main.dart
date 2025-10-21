@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'app.dart';
 import 'data/services/storage_service.dart';
+import 'data/services/achievement_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,7 @@ void main() async {
   
   // Initialize storage
   await StorageService().init();
+  await AchievementService().init();
   
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
